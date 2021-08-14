@@ -1,0 +1,9 @@
+{
+    "dependencies": {
+        "chokidar": "^3.5.2",
+        "esbuild": "^0.12.20"
+    },
+    "scripts": {
+        "build": "node build.js"
+    }
+}
