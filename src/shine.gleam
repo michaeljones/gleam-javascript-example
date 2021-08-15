@@ -1,6 +1,9 @@
 pub external type VirtualDom;
 
-pub external fn none() -> VirtualDom = "../src/shine.js" "virtualDomNone"
+pub type Target {
+  IdTarget(String)
+  VirtualDomTarget(VirtualDom)
+}
 
 pub type Html(msg) {
   Node(
@@ -24,26 +27,25 @@ pub type Program(msg, model) {
 }
 
 type Responder(msg, model) =
-  fn(String, Program(msg, model), msg, model, VirtualDom) -> Nil
+  fn(Program(msg, model), msg, model, VirtualDom) -> Nil
 
-external fn render_dom(String, Html(msg), VirtualDom, fn(msg, next_virtual_dom) -> Nil) -> Nil =
+external fn render_dom(Target, Html(msg), fn(msg, next_virtual_dom) -> Nil) -> Nil =
   "../src/shine.js" "renderDom"
 
 pub fn render(
-  id: String,
+  target: Target,
   output: Html(msg),
   program: Program(msg, model),
   model: model,
-  current_virtual_dom: VirtualDom,
   responder: Responder(msg, model),
 ) -> Nil {
-  render_dom(id, output, current_virtual_dom, fn(msg, next_virtual_dom) { responder(id, program, msg, model, next_virtual_dom) })
+  render_dom(target, output, fn(msg, next_virtual_dom) { responder(program, msg, model, next_virtual_dom) })
 }
 
-fn respond(id: String, program: Program(msg, model), msg: msg, model: model, current_virtual_dom) {
+fn respond(program: Program(msg, model), msg: msg, model: model, virtual_dom: VirtualDom) {
   let model = program.update(msg, model)
   let output = program.view(model)
-  render(id, output, program, model, current_virtual_dom, respond)
+  render(VirtualDomTarget(virtual_dom), output, program, model, respond)
 }
 
 pub fn app(id: String, program: Program(msg, model)) -> Nil {
@@ -53,7 +55,7 @@ pub fn app(id: String, program: Program(msg, model)) -> Nil {
   // Initial render
   let output = program.view(model)
 
-  render(id, output, program, model, none(), respond)
+  render(IdTarget(id), output, program, model, respond)
 
   Nil
 }
