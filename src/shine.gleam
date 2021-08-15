@@ -1,4 +1,4 @@
-pub external type VirtualDom;
+pub external type VirtualDom
 
 pub type Target {
   IdTarget(String)
@@ -29,7 +29,11 @@ pub type Program(msg, model) {
 type Responder(msg, model) =
   fn(Program(msg, model), msg, model, VirtualDom) -> Nil
 
-external fn render_dom(Target, Html(msg), fn(msg, next_virtual_dom) -> Nil) -> Nil =
+external fn render_dom(
+  Target,
+  Html(msg),
+  fn(msg, next_virtual_dom) -> Nil,
+) -> Nil =
   "../src/shine.js" "renderDom"
 
 pub fn render(
@@ -39,10 +43,21 @@ pub fn render(
   model: model,
   responder: Responder(msg, model),
 ) -> Nil {
-  render_dom(target, output, fn(msg, next_virtual_dom) { responder(program, msg, model, next_virtual_dom) })
+  render_dom(
+    target,
+    output,
+    fn(msg, next_virtual_dom) {
+      responder(program, msg, model, next_virtual_dom)
+    },
+  )
 }
 
-fn respond(program: Program(msg, model), msg: msg, model: model, virtual_dom: VirtualDom) {
+fn respond(
+  program: Program(msg, model),
+  msg: msg,
+  model: model,
+  virtual_dom: VirtualDom,
+) {
   let model = program.update(msg, model)
   let output = program.view(model)
   render(VirtualDomTarget(virtual_dom), output, program, model, respond)
@@ -58,45 +73,4 @@ pub fn app(id: String, program: Program(msg, model)) -> Nil {
   render(IdTarget(id), output, program, model, respond)
 
   Nil
-}
-
-// User code
-pub type Model {
-  Model(count: Int)
-}
-
-pub type Msg {
-  Increment
-  Decrement
-}
-
-fn init() -> Model {
-  Model(count: 1)
-}
-
-fn update(msg: Msg, model: Model) -> Model {
-  case msg {
-    Increment -> Model(model.count + 1)
-    Decrement -> Model(model.count - 1)
-  }
-}
-
-external fn int_to_string(Int) -> String =
-  "../src/shine.js" "intToString"
-
-fn view(model: Model) -> Html(Msg) {
-  Node(
-    "div",
-    [],
-    [
-      Node( "p", [], [Text("Count: "), Text(int_to_string(model.count))],),
-      Node("button", [OnClick(Increment)], [Text("Increment")]),
-      Node("button", [OnClick(Decrement)], [Text("Decrement")]),
-    ],
-  )
-}
-
-pub fn launch(id: String) -> Nil {
-  let program = Program(init, update, view)
-  app(id, program)
 }

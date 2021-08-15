@@ -1,3 +1,3 @@
-import * as Shine from "./shine.gleam";
+import * as App from "./app.gleam";
 
-Shine.launch("application-id");
+App.launch("application-id");
