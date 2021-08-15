@@ -21,3 +21,4 @@ logs
 rebar3.crashdump
 
 /public/bundle.js
+/node_modules
