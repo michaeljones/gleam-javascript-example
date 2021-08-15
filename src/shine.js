@@ -56,14 +56,16 @@ function convert(entry, updateCallback) {
     }
 }
 
-let vdom = null;
-
-export function render_dom(id, output, updateCallback) {
+export function renderDom(id, output, vdom, updateCallback) {
     const previous = vdom ?? document.getElementById(id);
-    vdom = convert(output, updateCallback);
-    patch(previous, vdom);
+    const next = convert(output, (msg) => updateCallback(msg, next));
+    patch(previous, next);
 }
 
-export function int_to_string(int) {
+export function intToString(int) {
     return int.toString();
+}
+
+export function virtualDomNone() {
+    return null;
 }

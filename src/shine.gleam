@@ -1,6 +1,6 @@
-pub type Dom {
-  Dom
-}
+pub external type VirtualDom;
+
+pub external fn none() -> VirtualDom = "../src/shine.js" "virtualDomNone"
 
 pub type Html(msg) {
   Node(
@@ -24,25 +24,26 @@ pub type Program(msg, model) {
 }
 
 type Responder(msg, model) =
-  fn(String, Program(msg, model), msg, model) -> Nil
+  fn(String, Program(msg, model), msg, model, VirtualDom) -> Nil
 
-external fn render_dom(String, Html(msg), fn(msg) -> Nil) -> Nil =
-  "../src/shine.js" "render_dom"
+external fn render_dom(String, Html(msg), VirtualDom, fn(msg, next_virtual_dom) -> Nil) -> Nil =
+  "../src/shine.js" "renderDom"
 
 pub fn render(
   id: String,
   output: Html(msg),
   program: Program(msg, model),
   model: model,
+  current_virtual_dom: VirtualDom,
   responder: Responder(msg, model),
 ) -> Nil {
-  render_dom(id, output, fn(msg) { responder(id, program, msg, model) })
+  render_dom(id, output, current_virtual_dom, fn(msg, next_virtual_dom) { responder(id, program, msg, model, next_virtual_dom) })
 }
 
-fn respond(id: String, program: Program(msg, model), msg: msg, model: model) {
+fn respond(id: String, program: Program(msg, model), msg: msg, model: model, current_virtual_dom) {
   let model = program.update(msg, model)
   let output = program.view(model)
-  render(id, output, program, model, respond)
+  render(id, output, program, model, current_virtual_dom, respond)
 }
 
 pub fn app(id: String, program: Program(msg, model)) -> Nil {
@@ -52,7 +53,7 @@ pub fn app(id: String, program: Program(msg, model)) -> Nil {
   // Initial render
   let output = program.view(model)
 
-  render(id, output, program, model, respond)
+  render(id, output, program, model, none(), respond)
 
   Nil
 }
@@ -79,7 +80,7 @@ fn update(msg: Msg, model: Model) -> Model {
 }
 
 external fn int_to_string(Int) -> String =
-  "../src/shine.js" "int_to_string"
+  "../src/shine.js" "intToString"
 
 fn view(model: Model) -> Html(Msg) {
   Node(
@@ -95,6 +96,5 @@ fn view(model: Model) -> Html(Msg) {
 
 pub fn launch(id: String) -> Nil {
   let program = Program(init, update, view)
-
   app(id, program)
 }
